@@ -83,8 +83,6 @@ ModifiedData.to_csv("NewReport.csv")
 
 
 #BUILD THE NEURAL NETWORK
-#https://medium.com/datadriveninvestor/building-neural-network-using-keras-for-classification-3a3656c726c1
-
 import numpy as np
 import pandas as pd
 import seaborn as sns
