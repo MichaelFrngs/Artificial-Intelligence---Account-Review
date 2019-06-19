@@ -55,7 +55,7 @@ CurrentDate = dt.datetime.now()
 CurrentMonth = CurrentDate.month
 CurrentDay = CurrentDate.day
 
-#Set threshold for figuring out who's late on payments
+#Threshold for figuring out who's late on payments
 if CurrentDate > FirstPaymentDate and CurrentDate >SecondPaymentDate and CurrentDate > ThirdPaymentDate:
     PaymentThreshold = 1-.01
 elif CurrentDate > FirstPaymentDate and CurrentDate >SecondPaymentDate:
@@ -67,28 +67,32 @@ print("The payment threshold is: ",PaymentThreshold)
 
 i=0
 for cell in trainingData["MethodOfPayment"]:
-    #Check if student is late and selfpay (paying out of pocket)
+    #If Student is late and selfpay
     if "sp" in cell.lower() and float(ModifiedData.loc[i,"PercentPaid"]) < PaymentThreshold and "tr" not in cell.lower() and "fa" not in cell.lower():
         ModifiedData.loc[i,"LateOnPayment"] = 1
     else:
         ModifiedData.loc[i,"LateOnPayment"] = 0
     i=i+1
 
-#Export useful report for management to view on excel
+
 ModifiedData.to_csv("NewReport.csv")
 
 
 
 
 
+
+
 #BUILD THE NEURAL NETWORK
+
+
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
 
-####SET VARIABLES HERE #### SET VARIABLES HERE #### SET VARIABLES HERE #### SET VARIABLES HERE #### SET VARIABLES HERE ###
+#SET VARIABLES HERE ####SET VARIABLES HERE ####SET VARIABLES HERE ####SET VARIABLES HERE ####SET VARIABLES HERE ###
 #UNUSED: "FA_Offered", "FA_Paid",,"TotalPayments", "PercentPaid", "FA_Accepted","Balance"
 predictiveVars = ["Balance","TotalFees","TotalPayments","FA_Shortage","FA_Accepted","TR","SP","FA","VA","LateOnPayment"]
 predictiveData = trainingData[predictiveVars]
@@ -107,19 +111,19 @@ trainingData = pd.concat([trainingData, predictiveData], axis = 1)
 #trainingData = pd.concat([Problem, NoProblem], axis = 0)
 
 
-#Predictive Variables for Neural Network training
+
 X= trainingData[:][predictiveVars]
 X['ZNumber'] = trainingData["ZNumber"]
 X.set_index("ZNumber", inplace = True)
 
-#Set the answer key to train the network on
 y= pd.DataFrame(trainingData[:]["ActionRequired"])
 y['ZNumber'] = trainingData["ZNumber"]
 y.set_index("ZNumber", inplace = True)
 
 
 
-#standardizing the input features
+
+#standardizing the input feature
 from sklearn.preprocessing import StandardScaler
 sc = StandardScaler()
 X = pd.DataFrame(sc.fit_transform(X))
@@ -130,18 +134,20 @@ X.fillna(value=0, inplace= True)
 
 
 #We now split the input features and target variables into 
-#training set and test data set. Our testing dataset will be 30% of our entire dataset.
+#training dataset and test dataset. out test dataset will be 30% of our entire dataset.
 from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
 
 from keras import Sequential
 from keras.layers import Dense, Dropout
 
-#This section creates the neural network
+
 classifier = Sequential()
-#Hidden Layers
+#First Hidden Layer
 classifier.add(Dense(8, activation='relu', kernel_initializer='random_normal', input_dim=len(predictiveVars))) #we have 11 inputs, so len shows 11
+#Second  Hidden Layer
 classifier.add(Dense(16, activation='relu', kernel_initializer='random_normal'))
+#Second  Hidden Layer
 classifier.add(Dense(64, activation='relu', kernel_initializer='random_normal'))
 classifier.add(Dense(128, activation='relu', kernel_initializer='random_normal'))
 classifier.add(Dropout(0.2))
@@ -159,14 +165,36 @@ classifier.add(Dropout(0.2))
 classifier.add(Dense(1, activation='sigmoid', kernel_initializer='random_normal'))
 
 #Compiling the neural network
-classifier.compile(optimizer ='adam',loss='binary_crossentropy', metrics =['accuracy','categorical_accuracy'])
+classifier.compile(optimizer ='adam',loss='binary_crossentropy', metrics =['accuracy'])
+
+
+
+
+
+#Let's make our output reporting system
+#Tensorboard is a called a "callback"
+#This "board" shows us results and stuff.
+#To access tensorboard, open cmd.exe and write: tensorboard --logdir=logs
+#If that command gives you problems, downgrade by using: pip install tensorboard==1.12.2   into anaconda promp
+#Finally, go to the posted url in the cmd prompt to open tensorboard
+from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
+NAME = f"Model {CurrentDate.month}-{CurrentDate.day}-{CurrentDate.year} {CurrentDate.hour}-{CurrentDate.minute}"
+tensorboard = TensorBoard(log_dir = f"C:/Users/mfrangos2016/Desktop/R/Leap Ahead Data Merger/logs/{NAME}") #Dynamically created names for our logs. Goes by the model name we defined above
+#More tensorboard settings
+filepath = "CallBack Model-{epoch:02d}-{val_acc:.3f}"
+checkpoint = ModelCheckpoint("models/{}.model".format(
+        filepath,monitor = "val_acc",
+        verbose = 1,
+        save_best_only = True,
+        mode = "max"))
+
+
 
 ##########################################
-#Fitting the network to the training dataset (Train the network)
+#Fitting the data to the training dataset
 ##########################################
-classifier.fit(X_train,y_train, batch_size=40, epochs=100, shuffle=True, validation_data=(X_test,y_test))
+classifier.fit(X_train,y_train, batch_size=8, epochs=1000, shuffle=True, validation_data=(X_test,y_test), callbacks = [tensorboard,checkpoint])
 
-#Evaluate the model
 eval_model=classifier.evaluate(X_train, y_train)
 print("Loss = ", eval_model[0],"||||||||||||||", "Accuracy = ", eval_model[1])
 
@@ -174,7 +202,7 @@ print("Loss = ", eval_model[0],"||||||||||||||", "Accuracy = ", eval_model[1])
 y_pred=classifier.predict(X_test)
 y_pred =(y_pred>0.5)
 
-#Check the accuracy on the test dataset
+#Now is the moment of truth. we check the accuracy on the test dataset
 from sklearn.metrics import confusion_matrix
 cm = confusion_matrix(y_test, y_pred)
 
@@ -194,11 +222,11 @@ print("Total Accuracy = ", (cm[0][0]+cm[1][1])/(cm[0][0]+cm[0][1]+cm[1][0]+cm[1]
 
 
 
-#LETS MAKE PREDICTIONS ON UNSEEN DATA
-#LETS MAKE PREDICTIONS ON UNSEEN DATA
-#LETS MAKE PREDICTIONS ON UNSEEN DATA
+#LETS MAKE PREDICTIONS WITH SOME UNSEEN DATASET
+#LETS MAKE PREDICTIONS WITH SOME UNSEEN DATASET
+#LETS MAKE PREDICTIONS WITH SOME UNSEEN DATASET
 
-#Load Data
+#Laod Data
 SecondValidationSet = pd.read_csv("FinalOutputData - All Merged Data.csv")
 
 #Data for testing bugs
@@ -268,12 +296,14 @@ ynew = classifier.predict_classes(Xnew)
 #assign the predictions to the students
 SecondValidationSet["IsThereAProblem?"] = ynew
 
-#Export AI Predictions to CSV
-SecondValidationSet.to_csv("AI Predictions.csv")
+SecondValidationSet.to_csv("AI Predictions2.csv")
 
 
 
 
 
+
+
+    
 
     
