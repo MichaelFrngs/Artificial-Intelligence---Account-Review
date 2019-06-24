@@ -1,0 +1,81 @@
+import os
+os.chdir("C:/Users/mfrangos2016/Desktop/R/Leap Ahead Data Merger")
+import pandas as pd
+from keras.models import load_model
+from Action_required_Callback import predictiveVars
+from Action_required_Callback import calculate_payment_percentage
+
+#Select your model here
+classifier = load_model("C:/Users/mfrangos2016/Desktop/R/Leap Ahead Data Merger/Best models/CallBack Model-199-0.974.model")
+
+PaymentThreshold = calculate_payment_percentage()
+
+#Load Data to make predictions on
+SecondValidationSet = pd.read_csv("FinalOutputData - All Merged Data.csv")
+
+
+SecondValidationSet["MethodOfPayment"] = SecondValidationSet["MethodOfPayment"].astype(str)
+
+#Process the data into 1-hot columns
+i=0
+for cell in SecondValidationSet["MethodOfPayment"]:
+    if "tr" in cell.lower():
+      SecondValidationSet.loc[i,"TR"] = 1
+    else:
+        SecondValidationSet.loc[i,"TR"] = 0
+    if "fa" in cell.lower():
+      SecondValidationSet.loc[i,"FA"] = 1
+    else:
+        SecondValidationSet.loc[i,"FA"] = 0    
+    if "sp" in cell.lower():
+      SecondValidationSet.loc[i,"SP"] = 1
+    else:
+        SecondValidationSet.loc[i,"SP"] = 0   
+    if "va" in cell.lower():
+      SecondValidationSet.loc[i,"VA"] = 1
+    else:
+        SecondValidationSet.loc[i,"VA"] = 0  
+    if "va" in cell.lower():
+      SecondValidationSet.loc[i,"VA"] = 1
+    else:
+        SecondValidationSet.loc[i,"VA"] = 0 
+        
+    i=i+1
+    
+i=0
+for cell in SecondValidationSet["MethodOfPayment"]:
+    #If Student is late and selfpay
+    if "sp" in cell.lower() and SecondValidationSet.loc[i,"PercentPaid"] < PaymentThreshold and "tr" not in cell.lower() and "fa" not in cell.lower():
+        SecondValidationSet.loc[i,"LateOnPayment"] = 1
+    else:
+        SecondValidationSet.loc[i,"LateOnPayment"] = 0    
+    i=i+1
+
+#Make the overage or underage of financial aid column
+i=0
+for cell in SecondValidationSet["MethodOfPayment"]:
+    SecondValidationSet.loc[i,"FA_Shortage"] = SecondValidationSet.loc[i,"TotalFees"]- SecondValidationSet.loc[i,"FA_Accepted"]
+    i=i+1
+
+
+X2= SecondValidationSet[:][predictiveVars]
+
+#standardizing the input feature
+from sklearn.preprocessing import StandardScaler
+sc = StandardScaler()
+X2 = pd.DataFrame(sc.fit_transform(X2))   
+
+#Replace na's with 0
+X2.fillna(value=0, inplace= True)
+
+X2["ZNumber"] = SecondValidationSet["ZNumber"]
+X2.set_index("ZNumber", inplace = True)
+
+Xnew = X2
+#Make predictions using the classifier model
+ynew = classifier.predict_classes(Xnew)
+
+#assign the predictions to the students
+SecondValidationSet["IsThereAProblem?"] = ynew
+
+SecondValidationSet.to_csv("AI Predictions2.csv")
