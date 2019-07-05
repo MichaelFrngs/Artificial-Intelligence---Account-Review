@@ -29,7 +29,7 @@ def calculate_payment_percentage():
 
 def main():
     #training data
-    trainingData = pd.read_csv("aCTION REquired data.csv", encoding = "ISO-8859-1")
+    trainingData = pd.read_csv("Action Required data.csv", encoding = "ISO-8859-1")
     
     
     ModifiedData = trainingData
