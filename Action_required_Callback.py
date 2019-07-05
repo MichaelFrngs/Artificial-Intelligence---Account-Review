@@ -3,7 +3,7 @@ os.chdir("C:/Users/mfrangos2016/Desktop/R/Leap Ahead Data Merger")
 import pandas as pd
 import datetime as dt
     
-#SET FEATURE VARIABLES HERE. Which data will we use to predict bad accounts?
+#SET FEATURE VARIABLES HERE. Which data will we use to predict bad accounts
 #UNUSED: "FA_Offered", "FA_Paid",,"TotalPayments", "PercentPaid", "FA_Accepted","Balance"
 predictiveVars = ["Balance","TotalFees","TotalPayments","FA_Shortage","FA_Accepted","TR","SP","FA","VA","LateOnPayment"]
 
