@@ -104,7 +104,7 @@ def main():
     
     
     ##BALANCE THE DATA
-    #Section not used. Although predictions were accurate, the model was flagging more accounts than needed.
+    #Section not used. Although predictions were accurate, the model was flagging more accounts than necessary.
     
     #Problem = pd.DataFrame(trainingData[trainingData[:]["ActionRequired"] == 1])
     #NoProblem = pd.DataFrame(trainingData[trainingData[:]["ActionRequired"] == 0])
@@ -174,13 +174,7 @@ def main():
     
     
     
-    
-    #Let's make our output reporting system
-    #Tensorboard is a called a "callback"
-    #This "board" shows us results and stuff.
-    #To access tensorboard, open cmd.exe and write: tensorboard --logdir=logs
-    #If that command gives you problems, downgrade by using: pip install tensorboard==1.12.2   into anaconda promp
-    #Finally, go to the posted url in the cmd prompt to open tensorboard
+    #Callbacks
     from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
     NAME = f"Model {CurrentDate.month}-{CurrentDate.day}-{CurrentDate.year} {CurrentDate.hour}-{CurrentDate.minute}"
     tensorboard = TensorBoard(log_dir = f"C:/Users/mfrangos2016/Desktop/R/Leap Ahead Data Merger/logs/{NAME}") #Dynamically created names for our logs. Goes by the model name we defined above
